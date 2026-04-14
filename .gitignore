@@ -1,0 +1,53 @@
+
+# ==========================================
+# 1. CHẶN DỮ LIỆU (DATA LAKE) - QUAN TRỌNG NHẤT
+# ==========================================
+# Chặn toàn bộ thư mục data để tránh đẩy file nặng lên GitHub
+
+# Nếu sinh viên dùng các thư mục tên khác để chứa dữ liệu
+output/
+*.csv
+*.json
+*.parquet
+*.avro
+*.orc
+*.db
+*.sqlite
+
+# ==========================================
+# 2. CHẶN ARTIFACTS CỦA PYSPARK & HADOOP
+# ==========================================
+metastore_db/
+spark-warehouse/
+derby.log
+.spark-staged/
+events/
+checkpoint/
+
+# ==========================================
+# 3. CHẶN PYTHON & VIRTUAL ENVIRONMENT
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.venv/
+build/
+dist/
+*.egg-info/
+
+# ==========================================
+# 4. CHẶN JUPYTER NOTEBOOK ARTIFACTS
+# ==========================================
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+.virtual_documents/
+
+# ==========================================
+# 5. CHẶN FILE HỆ ĐIỀU HÀNH (RÁC)
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini

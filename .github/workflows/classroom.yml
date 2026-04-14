@@ -1,0 +1,79 @@
+name: GitHub Classroom Autograding
+
+# Kích hoạt tự động chạy mỗi khi sinh viên push code lên nhánh main
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  autograding:
+    name: Chấm điểm tự động Đồ án Big Data
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Lấy code của sinh viên về máy ảo của GitHub
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Cài đặt Python
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 3. Cài đặt các thư viện cần thiết
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest==8.0.0 pyspark==3.5.1
+          # Nếu sinh viên có file requirements riêng thì cài thêm
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 4. CHẠY BỘ TEST CỦA GIẢNG VIÊN (LẤY ĐIỂM SÀN)
+      # Bọc trong continue-on-error để dù test này lỗi, hệ thống vẫn chạy tiếp test của sinh viên
+      - name: 👨‍🏫 Chạy Test Chung của Giảng Viên
+        id: teacher_test
+        continue-on-error: true
+        run: |
+          echo "Bắt đầu kiểm tra cấu trúc file và chuẩn code..."
+          pytest .teacher_tests/ -v
+
+      # 5. CHẠY BỘ TEST NGHIỆP VỤ CỦA SINH VIÊN
+      - name: 🎓 Chạy Test Nghiệp Vụ của Nhóm
+        id: student_test
+        continue-on-error: true
+        run: |
+          echo "Bắt đầu kiểm tra logic nghiệp vụ của riêng nhóm..."
+          pytest tests_nghiep_vu/ -v
+
+      # 6. TỔNG HỢP KẾT QUẢ VÀ ĐÁNH GIÁ (PASSED / FAILED)
+      - name: 📊 Tổng hợp Kết quả Đánh giá
+        run: |
+          echo "========================================"
+          echo "TỔNG KẾT CHẤM ĐIỂM TỰ ĐỘNG"
+          echo "========================================"
+          
+          # Kiểm tra kết quả Bước 4
+          if [ "${{ steps.teacher_test.outcome }}" == "success" ]; then
+            echo "✅ TEST GIẢNG VIÊN: Đạt điểm sàn!"
+          else
+            echo "❌ TEST GIẢNG VIÊN: Không đạt! Nhóm xem lại cấu trúc nộp bài."
+            FAIL_FLAG=true
+          fi
+          
+          # Kiểm tra kết quả Bước 5
+          if [ "${{ steps.student_test.outcome }}" == "success" ]; then
+            echo "✅ TEST NGHIỆP VỤ : Hoàn thành xuất sắc!"
+          else
+            echo "❌ TEST NGHIỆP VỤ : Có lỗi logic. Nhóm cần fix code."
+            FAIL_FLAG=true
+          fi
+          
+          echo "========================================"
+          
+          # Đánh dấu Dấu X Đỏ trên GitHub nếu có bất kỳ bước nào trượt
+          if [ "$FAIL_FLAG" == "true" ]; then
+            exit 1
+          fi
