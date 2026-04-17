@@ -44,8 +44,4 @@ Mỗi khi bạn nộp code (Push lên GitHub nhánh main), hệ thống GitHub A
 ## 📋 5. DANH SÁCH ĐỀ TÀI ĐỊNH HƯỚNG
 Tùy thuộc vào nhóm đăng ký, các bạn sẽ thực hiện 1 trong 5 hướng đề tài sau:
 * Nhóm 1: Thương mại điện tử & Bán lẻ (Market Basket Analysis, RFM).
-* Nhóm 2: Tài chính & Ngân hàng (Fraud Detection, Stock Trend Prediction).
-* Nhóm 3: Mạng xã hội & NLP (Real-time Sentiment Analysis, Fake News Detection).
-* Nhóm 4: IoT & Thành phố thông minh (Air Quality, DDoS Detection).
-* Nhóm 5: Hệ thống gợi ý (Movie/Music, Job Recommendation).
-Chúc các nhóm phân công công việc hiệu quả và hoàn thành xuất sắc đồ án!
+
