@@ -1,4 +1,4 @@
-"""Storage layer: move data from raw to staging/curated using Spark + Parquet."""
+"""Lớp storage: chuyển dữ liệu raw -> staging/curated bằng Spark + Parquet."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def _read_csv_folder(spark: SparkSession, path: Path) -> DataFrame:
 
 
 def _pick_existing_column(columns: list[str], candidates: list[str]) -> str | None:
-    """Return first matching column name from candidates (case-insensitive)."""
+    """Trả về tên cột đầu tiên khớp với danh sách candidate (không phân biệt hoa thường)."""
     lowered = {c.lower(): c for c in columns}
     for name in candidates:
         if name.lower() in lowered:
@@ -50,7 +50,7 @@ def stage_instacart_raw(spark: SparkSession) -> None:
     dst = STAGING_ROOT / "instacart"
     dst.mkdir(parents=True, exist_ok=True)
 
-    print("[STORAGE] Staging Instacart CSV files to Parquet...")
+    print("[STORAGE] Đang chuyển CSV Instacart sang Parquet (staging)...")
     for file_name in ["orders", "products", "order_products__prior", "order_products__train"]:
         csv_file = src / f"{file_name}.csv"
         if csv_file.exists():
@@ -66,17 +66,17 @@ def curate_mba_transactions(spark: SparkSession, sample_fraction: float = 1.0) -
     prior_path = src / "order_products__prior"
     if not prior_path.exists():
         raise FileNotFoundError(
-            "Missing staged file for MBA: data/2_staging/instacart/order_products__prior"
+            "Thiếu file staging cho MBA: data/2_staging/instacart/order_products__prior"
         )
 
     order_products = spark.read.parquet(str(prior_path))
     if sample_fraction < 1.0:
-        # Deterministic downsampling by order_id for memory-constrained local runs.
+        # Lấy mẫu xác định theo order_id để chạy ổn trên máy local ít RAM.
         mod_base = 1000
         threshold = max(1, int(sample_fraction * mod_base))
         order_products = order_products.filter((F.col("order_id") % mod_base) < threshold)
         print(
-            f"[STORAGE] MBA sample_fraction={sample_fraction} applied by order_id hash filtering."
+            f"[STORAGE] Đã áp dụng MBA sample_fraction={sample_fraction} theo order_id hash."
         )
 
     transactions = (
@@ -87,7 +87,7 @@ def curate_mba_transactions(spark: SparkSession, sample_fraction: float = 1.0) -
     )
 
     transactions.write.mode("overwrite").parquet(str(dst / "transactions"))
-    print("[STORAGE] Curated MBA transactions written to data/3_curated/mba/transactions")
+    print("[STORAGE] Đã ghi curated MBA transactions tại data/3_curated/mba/transactions")
 
 
 def stage_online_retail_raw(spark: SparkSession) -> None:
@@ -95,7 +95,7 @@ def stage_online_retail_raw(spark: SparkSession) -> None:
     dst = STAGING_ROOT / "online_retail"
     dst.mkdir(parents=True, exist_ok=True)
 
-    print("[STORAGE] Staging Online Retail CSV files to Parquet...")
+    print("[STORAGE] Đang chuyển CSV Online Retail sang Parquet (staging)...")
     df = _read_csv_folder(spark, src)
     df.write.mode("overwrite").parquet(str(dst / "sales"))
 
@@ -106,7 +106,7 @@ def curate_rfm_base(spark: SparkSession) -> None:
     dst.mkdir(parents=True, exist_ok=True)
 
     if not src.exists():
-        raise FileNotFoundError("Missing staged file for RFM: data/2_staging/online_retail/sales")
+        raise FileNotFoundError("Thiếu file staging cho RFM: data/2_staging/online_retail/sales")
 
     sales = spark.read.parquet(str(src))
 
@@ -130,10 +130,10 @@ def curate_rfm_base(spark: SparkSession) -> None:
     missing = [k for k, v in required.items() if v is None]
     if missing:
         raise ValueError(
-            f"RFM source missing required columns: {missing}. Found columns: {sales.columns}"
+            f"Dữ liệu RFM thiếu cột bắt buộc: {missing}. Các cột hiện có: {sales.columns}"
         )
 
-    # Handle common retail schema and remove invalid rows before downstream modeling.
+    # Chuẩn hóa schema retail phổ biến và loại bỏ bản ghi không hợp lệ trước khi modeling.
     cleaned = (
         sales.withColumn("InvoiceNo", F.col(invoice_col).cast("string"))
         .withColumn("StockCode", F.col(stock_col).cast("string"))
@@ -167,7 +167,7 @@ def curate_rfm_base(spark: SparkSession) -> None:
     )
 
     cleaned.write.mode("overwrite").parquet(str(dst / "sales_clean"))
-    print("[STORAGE] Curated RFM base written to data/3_curated/rfm/sales_clean")
+    print("[STORAGE] Đã ghi curated RFM base tại data/3_curated/rfm/sales_clean")
 
 
 def run_storage(project: str, mba_sample_fraction: float = 1.0) -> None:
@@ -185,13 +185,13 @@ def run_storage(project: str, mba_sample_fraction: float = 1.0) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Storage step: raw -> staging -> curated")
+    parser = argparse.ArgumentParser(description="Bước storage: raw -> staging -> curated")
     parser.add_argument("--project", choices=["mba", "rfm", "both"], default="both")
     parser.add_argument(
         "--mba-sample-fraction",
         type=float,
         default=1.0,
-        help="Fraction (0-1] of MBA orders for local memory-safe processing",
+        help="Tỉ lệ mẫu (0-1] của đơn MBA để chạy an toàn bộ nhớ trên local",
     )
     return parser.parse_args()
 

@@ -1,4 +1,4 @@
-"""Main pipeline entrypoint: ingestion -> storage -> processing."""
+"""Điểm vào chính cho pipeline: ingestion -> storage -> processing."""
 
 from __future__ import annotations
 
@@ -6,25 +6,27 @@ import argparse
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run end-to-end Big Data pipeline")
+    parser = argparse.ArgumentParser(description="Chạy pipeline Big Data từ đầu đến cuối")
     parser.add_argument("--project", choices=["mba", "rfm", "both"], default="both")
     parser.add_argument(
         "--step",
         choices=["all", "ingestion", "storage", "processing"],
         default="all",
-        help="Run a specific step or the whole pipeline",
+        help="Chạy một bước cụ thể hoặc toàn bộ pipeline",
     )
-    parser.add_argument("--force-download", action="store_true")
-    parser.add_argument("--mba-dataset")
-    parser.add_argument("--rfm-dataset")
-    parser.add_argument("--min-support", type=float, default=0.005)
-    parser.add_argument("--min-confidence", type=float, default=0.2)
-    parser.add_argument("--k-clusters", type=int, default=4)
+    parser.add_argument("--force-download", action="store_true", help="Ép tải lại dữ liệu từ Kaggle")
+    parser.add_argument("--mba-dataset", help="Ghi đè dataset Kaggle cho luồng MBA")
+    parser.add_argument("--rfm-dataset", help="Ghi đè dataset Kaggle cho luồng RFM")
+    parser.add_argument("--min-support", type=float, default=0.005, help="Ngưỡng support cho MBA")
+    parser.add_argument(
+        "--min-confidence", type=float, default=0.2, help="Ngưỡng confidence cho MBA"
+    )
+    parser.add_argument("--k-clusters", type=int, default=4, help="Số cụm cho RFM")
     parser.add_argument(
         "--mba-sample-fraction",
         type=float,
         default=1.0,
-        help="Fraction (0-1] of MBA orders used in storage step for local runs",
+        help="Tỉ lệ mẫu (0-1] đơn MBA dùng ở bước storage (hữu ích khi máy yếu RAM)",
     )
     return parser.parse_args()
 

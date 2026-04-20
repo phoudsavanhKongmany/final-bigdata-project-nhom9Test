@@ -1,4 +1,4 @@
-"""Processing layer for MBA (FP-Growth) and RFM (K-Means) with Spark DataFrame."""
+"""Lớp processing cho MBA (FP-Growth) và RFM (K-Means) bằng Spark DataFrame."""
 
 from __future__ import annotations
 
@@ -36,7 +36,9 @@ def run_market_basket(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if not src.exists():
-        raise FileNotFoundError("Missing curated MBA transactions at data/3_curated/mba/transactions")
+        raise FileNotFoundError(
+            "Thiếu dữ liệu curated MBA tại data/3_curated/mba/transactions"
+        )
 
     transactions = spark.read.parquet(str(src)).select("items")
 
@@ -47,7 +49,7 @@ def run_market_basket(
     model.freqItemsets.write.mode("overwrite").parquet(str(out_dir / "frequent_itemsets"))
     model.associationRules.write.mode("overwrite").parquet(str(out_dir / "association_rules"))
 
-    print("[PROCESSING] MBA result written to data/3_curated/results/mba")
+    print("[PROCESSING] Đã ghi kết quả MBA tại data/3_curated/results/mba")
 
 
 def run_rfm_segmentation(spark: SparkSession, k_clusters: int = 4) -> None:
@@ -56,13 +58,13 @@ def run_rfm_segmentation(spark: SparkSession, k_clusters: int = 4) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if not src.exists():
-        raise FileNotFoundError("Missing curated RFM base at data/3_curated/rfm/sales_clean")
+        raise FileNotFoundError("Thiếu dữ liệu curated RFM tại data/3_curated/rfm/sales_clean")
 
     sales = spark.read.parquet(str(src))
 
     snapshot = sales.select(F.max("InvoiceTS").alias("max_ts")).collect()[0]["max_ts"]
     if snapshot is None:
-        raise ValueError("RFM source is empty after cleaning")
+        raise ValueError("Dữ liệu RFM rỗng sau bước làm sạch")
 
     rfm = (
         sales.groupBy("CustomerID")
@@ -96,9 +98,9 @@ def run_rfm_segmentation(spark: SparkSession, k_clusters: int = 4) -> None:
         .orderBy("segment")
     )
 
-    # Translate technical cluster IDs into business labels by scoring cluster profile:
-    # - lower recency is better
-    # - higher frequency and monetary are better
+    # Đổi cluster kỹ thuật thành nhãn nghiệp vụ theo điểm hồ sơ cụm:
+    # - recency càng thấp càng tốt
+    # - frequency và monetary càng cao càng tốt
     w_recency = Window.orderBy(F.col("avg_recency_days").desc())
     w_freq = Window.orderBy(F.col("avg_frequency").asc())
     w_monetary = Window.orderBy(F.col("avg_monetary").asc())
@@ -137,7 +139,7 @@ def run_rfm_segmentation(spark: SparkSession, k_clusters: int = 4) -> None:
     customer_segments.write.mode("overwrite").parquet(str(out_dir / "customer_segments"))
     labeled_summary.write.mode("overwrite").parquet(str(out_dir / "segment_summary"))
 
-    print("[PROCESSING] RFM result written to data/3_curated/results/rfm")
+    print("[PROCESSING] Đã ghi kết quả RFM tại data/3_curated/results/rfm")
 
 
 def run_processing(
@@ -161,11 +163,13 @@ def run_processing(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Processing step with PySpark DataFrame")
+    parser = argparse.ArgumentParser(description="Bước processing bằng PySpark DataFrame")
     parser.add_argument("--project", choices=["mba", "rfm", "both"], default="both")
-    parser.add_argument("--min-support", type=float, default=0.005)
-    parser.add_argument("--min-confidence", type=float, default=0.2)
-    parser.add_argument("--k-clusters", type=int, default=4)
+    parser.add_argument("--min-support", type=float, default=0.005, help="Ngưỡng support cho MBA")
+    parser.add_argument(
+        "--min-confidence", type=float, default=0.2, help="Ngưỡng confidence cho MBA"
+    )
+    parser.add_argument("--k-clusters", type=int, default=4, help="Số cụm cho phân khúc RFM")
     return parser.parse_args()
 
 
