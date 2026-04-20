@@ -1,5 +1,4 @@
 pyspark==3.5.1
-pyspark==4.0.2
 kaggle>=1.6.17
 python-dotenv>=1.0.1
 matplotlib>=3.8.0
